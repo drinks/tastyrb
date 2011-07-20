@@ -30,8 +30,13 @@ module Tastyrb
       redefine_resources!
     end
 
-    def base_uri; @base_uri; end
-    def base_uri_path; URI.parse(@base_uri).path; end
+    def base_uri
+      @base_uri
+    end
+
+    def base_uri_path
+      URI.parse(@base_uri).path
+    end
 
     def get(method, options)
       params = prepare_options options
@@ -66,8 +71,13 @@ module Tastyrb
 
     end
 
-    def next; get_from_meta(meta.next); end
-    def previous; get_from_meta(meta.previous); end
+    def next
+      get_from_meta(meta.next)
+    end
+
+    def previous
+      get_from_meta(meta.previous)
+    end
 
     private
 
