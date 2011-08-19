@@ -14,20 +14,17 @@ module Tastyrb
     attr_accessor :api_key, :api_key_param, :jsonp_callback, :word_separator, :limit
     attr_reader :resources, :meta
 
-    def initialize(url=nil, api_key=nil, jsonp_callback=nil)
+    def initialize(base_uri=nil, api_key=nil, jsonp_callback=nil)
       @resources = []
-      if url
-        base_uri = url
-      end
       @api_key = api_key
       @api_key_param = 'api_key'
       @jsonp_callback = jsonp_callback
       @word_separator = '_'
+      set_base_uri(base_uri)
     end
 
-    def base_uri=(url)
-      @base_uri = url
-      redefine_resources!
+    def base_uri=(uri)
+      set_base_uri(uri)
     end
 
     def base_uri
@@ -46,7 +43,7 @@ module Tastyrb
         Connection.format :json
       end
 
-      response = Connection.get "#{@base_uri}/#{path_for(method)}", :query => params
+      response = Connection.get "#{@base_uri}#{path_for(method)}", :query => params
 
       if response.code == 200
         # JSONP
@@ -57,10 +54,11 @@ module Tastyrb
         meta = JSON.parse(response.body)['meta']
         @meta = Response.new(meta)
 
-        case result.size
-        when 0
+        if result.size == 0
           raise ResponseCodeError, "404: No document found"
-        when 1
+        elsif result.size == 1 && (options.keys.join(' ') =~ /(^|[\s\b_])id(?=\b|__)(?!__(in|i?(contains|(starts|ends)with)))/) != nil
+          # if we asked for an item by id and only one was returned, return just the object,
+          # else return a list always
           Response.new(result[0])
         else
           result.map {|object| Response.new(object)}
@@ -109,27 +107,34 @@ module Tastyrb
       options.merge @api_key_param.to_sym => @api_key
     end
 
+    def set_base_uri(uri)
+      @base_uri = uri =~ /\/$/ ? uri : "#{uri}/"
+      redefine_resources!
+    end
+
     def redefine_resources!
       # a given base_uri has unique resources associated with it
       # we map them dynamically to methods each time the url changes
       #> c = Tastyrb::Client.new
       #> c.base_uri='http://example.com/api/v1'
       #> c.my__search__method(:keywords=>'foo')
-      @resources.each do |resource|
-        (class << self; self; end).class_eval do
-          remove_method resource
+      if @base_uri
+        @resources.each do |resource|
+          (class << self; self; end).class_eval do
+            remove_method resource
+          end
         end
-      end
 
-      resource_desc = Connection.get(@base_uri, :query=>{:format=>'json'})
-      @resources = resource_desc.parsed_response.map do |resource|
-        method_for(resource[0]).to_sym
-      end
+        resource_desc = Connection.get(@base_uri, :query=>{:format=>'json'})
+        @resources = resource_desc.parsed_response.map do |resource|
+          method_for(resource[0]).to_sym
+        end
 
-      @resources.each do |resource|
-        (class << self; self; end).class_eval do
-          define_method resource do |*args|
-            get(resource, args[0]||{})
+        @resources.each do |resource|
+          (class << self; self; end).class_eval do
+            define_method resource do |*args|
+              get(resource, args[0]||{})
+            end
           end
         end
       end
