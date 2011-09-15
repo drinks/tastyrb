@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "tastyrb"
-  s.version = "0.1.0"
+  s.version = File.open('VERSION').gets
   s.date = "2011-07-18"
   s.summary = "Generic client for self-describing APIs built with django-tastypie."
   s.description = "Generic client for self-describing APIs built with django-tastypie."
