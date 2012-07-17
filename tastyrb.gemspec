@@ -5,7 +5,7 @@ Gem::Specification.new do |s|
   s.summary = "Generic client for self-describing APIs built with django-tastypie."
   s.description = "Generic client for self-describing APIs built with django-tastypie."
   s.email = "dan.drinkard@gmail.com"
-  s.homepage = "http://github.com/dandrinkard/tastyrb/"
+  s.homepage = "http://github.com/drinks/tastyrb/"
   s.authors = ["Dan Drinkard"]
   s.files = ['lib/tastyrb.rb', 'README.md', 'LICENSE']
 
